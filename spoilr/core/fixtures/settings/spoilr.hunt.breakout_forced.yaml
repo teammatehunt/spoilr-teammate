@@ -1,0 +1,9 @@
+- model: spoilr_core.huntsetting
+  pk: 8
+  fields:
+    name: spoilr.hunt.breakout_forced
+    text_value: null
+    boolean_value: false
+    date_value: null
+    create_time: 2022-12-22 18:19:12.380601+00:00
+    update_time: 2022-12-22 18:19:12.380601+00:00
