@@ -181,7 +181,6 @@ def get_response(
     return Response(answer, "incorrect")
 
 
-# 2023: This API is not used due to custom checking logic.
 def submit_puzzle_answer(
     maybe_team: typing.Optional[m.Team],
     puzzle: m.Puzzle,
@@ -371,7 +370,7 @@ def submit_minipuzzle_answer(
 
 
 def mark_minipuzzle_solved(team, puzzle, minipuzzle_ref, *, skip_notify=False):
-    if team.is_public:
+    if team.is_public and not settings.IS_PYODIDE:
         return
 
     minipuzzle, _ = Minipuzzle.objects.update_or_create(

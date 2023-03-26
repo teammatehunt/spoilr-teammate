@@ -1,13 +1,17 @@
-import collections, colorsys, datetime, random
+import collections
+import colorsys
+import datetime
+import random
 
 from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import render
-
+from puzzles.assets import get_hashed_url
 from spoilr.core.api.hunt import get_site_end_time, get_site_launch_time
-from spoilr.core.models import Puzzle, PuzzleAccess, PuzzleSubmission, TeamType, Team
+from spoilr.core.models import Puzzle, PuzzleAccess, PuzzleSubmission, Team, TeamType
 from spoilr.hints.models import Hint
 from spoilr.hq.util.decorators import hq
+from spoilr.utils import generate_url
 
 
 def get_style_map():
@@ -78,54 +82,20 @@ def solve_graph_view(request):
     for d in guess_counts:
         guess_counts_by_id[d["team_id"]] = d["guesses"]
 
-    # To account for innovation properly, we have to retrieve the 1st solve time from
-    # PuzzleAccess, because some submissions during Hunt were cleared by people toggling
-    # gizmos post-Hunt
-    correct_puzzle_subs = (
-        all_puzzle_subs.filter(correct=True)
-        .exclude(puzzle__round__slug="innovation")
-        .values_list(
-            "team_id",
-            "puzzle_id",
-            "puzzle__slug",
-            "timestamp",
-        )
+    correct_puzzle_subs = all_puzzle_subs.filter(correct=True).values_list(
+        "team_id",
+        "puzzle_id",
+        "puzzle__slug",
+        "timestamp",
     )
-    correct_innovation_subs = (
-        PuzzleAccess.objects.select_related("team", "puzzle")
-        .exclude(team__type=TeamType.INTERNAL)
-        .exclude(team__type=TeamType.PUBLIC)
-        .filter(
-            solved=True, solved_time__isnull=False, puzzle__round__slug="innovation"
-        )
-        .filter(solved_time__gte=start, solved_time__lte=end)
-        .values_list("team_id", "puzzle_id", "puzzle__slug", "solved_time")
-        .order_by("solved_time")
-    )
-    # No free answers possible in innovation.
-    correct_innovation_subs = [info + (False,) for info in correct_innovation_subs]
     all_correct_subs = list(correct_puzzle_subs)
-    all_correct_subs.extend(correct_innovation_subs)
     all_correct_subs.sort(key=lambda info: info[3])  # solve-time
 
-    breakout_solves_preemail = collections.defaultdict(int)
-    breakout_solves_postemail = collections.defaultdict(int)
-    # 1 PM start, 8:15 PM email send
-    breakout_email_time = start + datetime.timedelta(hours=7, minutes=15)
     free_answers_by_hour = collections.defaultdict(int)
 
     style_map = get_style_map()
 
     for team_id, puzzle_id, puzzle_slug, solved_time, used_free in all_correct_subs:
-        if puzzle_slug == "undefined":
-            # We are missing breakout submissions for some teams including TTBNL due to
-            # manually skipping them past unsolvable jigsaw. Exclude from solve graph,
-            # still get some stats about breakout times.
-            if solved_time < breakout_email_time:
-                breakout_solves_preemail[solve_counts_by_team[team_id]] += 1
-            else:
-                breakout_solves_postemail[solve_counts_by_team[team_id]] += 1
-            continue
         solve_counts_by_team[team_id] += 1
         solved_time_as_unix = solved_time.timestamp() * 1000
         solve_counts_time_series_by_team[team_id].append(
@@ -144,7 +114,6 @@ def solve_graph_view(request):
 
     # False = 0 True = 1
     hints_by_hour = [hint_responses_by_hour, hint_requests_by_hour]
-    hq_by_hour = [contact_hq_responses_by_hour, contact_hq_requests_by_hour]
 
     hints_requested = (
         Hint.objects.filter(timestamp__lte=end)
@@ -153,10 +122,7 @@ def solve_graph_view(request):
     )
     for hint in hints_requested:
         hour_as_unix = closest_hour(hint.timestamp, start)
-        if hint.puzzle.slug == "contact-hq":
-            hq_by_hour[int(hint.is_request)][hour_as_unix] += 1
-        else:
-            hints_by_hour[int(hint.is_request)][hour_as_unix] += 1
+        hints_by_hour[int(hint.is_request)][hour_as_unix] += 1
 
     # The drawing order is first one on top, draw the largest teams last.
     team_size_ids = team_sizes_by_id.keys() & solve_counts_by_team.keys()
@@ -168,6 +134,10 @@ def solve_graph_view(request):
         request,
         "spoilr/progress/solves.tmpl",
         {
+            "sites": {
+                "museum": generate_url("museum", ""),
+                "factory": generate_url("factory", ""),
+            },
             "hint_counts_for_chartjs": {
                 "datasets": [
                     {
@@ -291,13 +261,6 @@ def solve_graph_view(request):
                     for team_id in guess_count_ids
                 ],
             },
-            # Spans 0 to 9 solves on prod server
-            "breakout_solves_preemail": [
-                breakout_solves_preemail[i] for i in range(10)
-            ],
-            "breakout_solves_postemail": [
-                breakout_solves_postemail[i] for i in range(10)
-            ],
             # Not the true max - whatever makes the plot look nice.
             "max_solves": 180,
         },

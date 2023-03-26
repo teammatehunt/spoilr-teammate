@@ -1,7 +1,7 @@
 import collections
 from functools import cmp_to_key
 
-import ujson as json
+from spoilr.utils import json
 from django.db import models
 from django.db.models import Prefetch
 from django.shortcuts import render

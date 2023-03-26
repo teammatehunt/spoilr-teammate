@@ -48,7 +48,7 @@ class Command(BaseCommand):
                 fixtures.append(path)
 
         if not fixtures:
-            raise CommandError("No setting fixtures found in directory. Aborting.")
+            print("No setting fixtures found in directory. Skipping.")
 
         call_command("loaddata", *fixtures)
 

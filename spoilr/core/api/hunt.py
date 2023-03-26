@@ -1,7 +1,8 @@
 """Business logic for querying or updating the hunt state."""
 import logging
-
 from functools import lru_cache
+
+from django.conf import settings
 from django.utils.timezone import now
 from spoilr.core.models import (
     HuntSetting,
@@ -43,20 +44,6 @@ def get_site_close_time(site_ref=HUNT_REF):
     return setting.date_value
 
 
-@memoized_cache(CONFIG_CACHE_BUCKET)
-def is_breakout_forced(site_ref=HUNT_REF):
-    setting, _ = HuntSetting.objects.get_or_create(
-        name=f"spoilr.{site_ref}.breakout_forced"
-    )
-    return setting.boolean_value
-
-
-def set_breakout_forced(value: bool, site_ref=HUNT_REF):
-    HuntSetting.objects.update_or_create(
-        name=f"spoilr.{site_ref}.breakout_forced", defaults={"boolean_value": value}
-    )
-
-
 def is_site_launched(site_ref=HUNT_REF):
     site_launch_time = get_site_launch_time(site_ref)
     return site_launch_time and site_launch_time <= now()
@@ -69,7 +56,7 @@ def is_site_over(site_ref=HUNT_REF):
 
 def is_site_closed(site_ref=HUNT_REF):
     close_time = get_site_close_time(site_ref)
-    return close_time and close_time <= now()
+    return not settings.IS_POSTHUNT and close_time and close_time <= now()
 
 
 @clear_memoized_cache(CONFIG_CACHE_BUCKET)
@@ -87,6 +74,7 @@ def launch_site(site_ref=HUNT_REF):
     )
 
 
+@memoized_cache(CONFIG_CACHE_BUCKET)
 def is_site_solutions_published(site_ref=HUNT_REF):
     setting, _ = HuntSetting.objects.get_or_create(
         name=f"spoilr.{site_ref}.solutions_released"

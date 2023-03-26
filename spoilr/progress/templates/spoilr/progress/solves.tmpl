@@ -109,14 +109,15 @@ function refreshGraph(minThreshold, maxThreshold) {
         endTimestamp = datum.x;
       }
     }
-    dataset.pointStyle = dataset.pointStyle.map((image) => {
-        if (image in imageSrc) {
-          let size = 16;
-          const img = new Image(size, size);
-          img.src = imageSrc[image];
-          return img;
+    dataset.pointStyle = dataset.pointStyle.map((pair) => {
+        if (pair !== 'circle') {
+            const src = pair[0];
+            const size = pair[1];
+            const img = new Image(size, size);
+            img.src = src;
+            return img;
         }
-        return image;  // the original value
+        return pair;  // the original value
     });
   }
 
@@ -196,51 +197,6 @@ function refreshGraph(minThreshold, maxThreshold) {
         ds.hidden = true;
     });
     chartInstance.update();
-  });
-}
-
-function breakoutHistogram() {
-  const canvas = $("<canvas>").attr("id", "breakout-chart-canvas");
-
-  $("#breakout-chart")
-    .empty()
-    .append(canvas);
-  new Chart(canvas[0], {
-    type: 'bar',
-    data: {
-      labels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-      datasets: [{
-        label: 'Teams',
-        data: {{ breakout_solves_preemail }},
-        backgroundColor: '#90EE90',
-      }, {
-        label: 'Teams After Email',
-        data: {{ breakout_solves_postemail }},
-        backgroundColor: '#BEBEBE',
-      }]
-    },
-    options: {
-      scales: {
-        xAxes: [{
-          scaleLabel: {
-            display: true,
-            labelString: 'Solves',
-          },
-          ticks: {
-            min: 0,
-            max: 11,
-            maxTicksLimit: 20,
-          },
-          stacked: true
-        }],
-        yAxes: [{
-          ticks: {
-            beginAtZero: true,
-          },
-          stacked: true
-        }]
-      },
-    }
   });
 }
 
@@ -328,7 +284,6 @@ $(".max-solves").change((e) => {
 plotGraph("hint-counts", "#hint-chart");
 plotGraph("contacthq-counts", "#hq-chart");
 plotGraph("freeanswer-counts", "#freeanswer-chart");
-breakoutHistogram();
 const solveLabelCallback = (t, d) => ([`${d.datasets[t.datasetIndex].label}`, `Team Size: ${t.xLabel}`, `Solves: ${t.yLabel}`]);
 const guessLabelCallback = (t, d) => ([`${d.datasets[t.datasetIndex].label}`, `Guesses: ${t.xLabel}`, `Solves: ${t.yLabel}`]);
 bubbleChart("solves-by-size", "#teamsize-chart", 'Team Size', solveLabelCallback);

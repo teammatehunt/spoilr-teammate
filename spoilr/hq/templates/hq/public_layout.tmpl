@@ -33,20 +33,20 @@
   {% comment %} FIXME(update): Update this logic for your hunt {% endcomment %}
   <div id="navbarBasicExample" class="navbar-menu">
   <div class="navbar-start">
-    <a class="navbar-item" href="https://interestingthings.museum">Museum</a>
-    <a class="navbar-item" href="https://puzzlefactory.place">Puzzle Factory</a>
+    <a class="navbar-item" href="{{ sites.museum }}">Museum</a>
+    <a class="navbar-item" href="{{ sites.factory }}">Puzzle Factory</a>
     <div class="navbar-item has-dropdown is-hoverable">
       <a class="navbar-link">
         Hunt
       </a>
       <div class="navbar-dropdown">
-        <a class="navbar-item" href="/story">Story</a>
-        <a class="navbar-item" href="/about">About</a>
-        <a class="navbar-item" href="/events">Events</a>
-        <a class="navbar-item" href="/sponsors">Sponsors</a>
-        <a class="navbar-item" href="/health_and_safety">Health & Safety</a>
+        <a class="navbar-item" href="{{ sites.museum }}/story">Story</a>
+        <a class="navbar-item" href="{{ sites.museum }}/about">About</a>
+        <a class="navbar-item" href="{{ sites.museum }}/events">Events</a>
+        <a class="navbar-item" href="{{ sites.museum }}/sponsors">Sponsors</a>
+        <a class="navbar-item" href="{{ sites.museum }}/health_and_safety">Health & Safety</a>
         <a class="navbar-item" href="{% url 'spoilr.progress:solves' %}">Hunt Stats</a>
-        <a class="navbar-item" href="/credits">Credits</a>
+        <a class="navbar-item" href="{{ sites.museum }}/credits">Credits</a>
       </div>
     </div>
   </div>

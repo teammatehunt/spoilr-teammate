@@ -91,7 +91,7 @@ def task_claim_view(request):
                 )
             )
 
-        # XXX: This is a mh-2023 specific hack, and assumes that the update will succeed
+        # TODO: This is a hack, and assumes that the update will succeed
         if task.content_type.model_class() in (
             spoilr.email.models.Email,
             spoilr.hints.models.Hint,
@@ -165,7 +165,7 @@ def task_unclaim_view(request):
             )
         )
 
-        # XXX: This is a mh-2023 specific hack, and assumes that the update will succeed
+        # TODO: This is a hack, and assumes that the update will succeed
         if task.content_type.model_class() in (
             spoilr.email.models.Email,
             spoilr.hints.models.Hint,

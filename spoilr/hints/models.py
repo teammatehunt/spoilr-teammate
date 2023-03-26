@@ -308,9 +308,6 @@ class Hint(models.Model):
         )
 
         stem = "/spoilr/hints/"
-        if self.puzzle.slug == "contact-hq":
-            stem = "/spoilr/contact/"
-
         hint_answer_url = generate_url("hunt", stem, {"hint": self.pk})
 
         return (
